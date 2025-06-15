@@ -1,11 +1,13 @@
 /**
  * Main entry point for TelePets Telegram Bot
  */
+import { Bot } from "grammy";
+import { conversations, createConversation } from "@grammyjs/conversations";
 import { initializeDatabase } from "./database/connection.js";
 import { runMigrations } from "./database/migrations.js";
-import { createBot, createBotComposer } from "./bot/bot.js";
+import { type BotContext } from "./types/bot.js";
 import { userRegistrationMiddleware } from "./bot/middleware.js";
-import { showStarterPets, handlePetSelection, handlePetNaming } from "./bot/pets.js";
+import { registrationConversation } from "./bot/conversations.js";
 
 async function main(): Promise<void> {
   try {
@@ -19,19 +21,32 @@ async function main(): Promise<void> {
     console.log("🔄 Running database migrations...");
     await runMigrations(db);
 
-    // Create bot and composer
-    console.log("🤖 Creating bot instance...");
-    const bot = createBot();
-    const composer = createBotComposer();
+    // Create bot
+    const token = process.env.BOT_TOKEN;
+    if (!token) {
+      throw new Error("BOT_TOKEN environment variable is required");
+    }
+    const bot = new Bot<BotContext>(token);
 
-    // Add user registration middleware to composer
-    composer.use(userRegistrationMiddleware);
+    // Apply error boundary and private chat filtering to the bot
+    bot.errorBoundary((error) => {
+      console.error("Bot error occurred:", error);
+    });
 
-    // Use the composer in the bot
-    bot.use(composer);
+    // Create private chat composer  
+    const privateChatComposer = bot.chatType("private");
+
+    // Install conversations plugin
+    privateChatComposer.use(conversations());
+
+    // Register the registration conversation
+    privateChatComposer.use(createConversation(registrationConversation, "registration"));
+
+    // Add user registration middleware
+    privateChatComposer.use(userRegistrationMiddleware);
 
     // Bot commands
-    composer.command("start", async (ctx) => {
+    privateChatComposer.command("start", async (ctx) => {
       if (!ctx.user) {
         await ctx.reply("An error occurred. Please try again.");
         return;
@@ -43,45 +58,13 @@ async function main(): Promise<void> {
       } else {
         await ctx.reply(
           `👋 Welcome back, ${ctx.user.first_name}!\n\n` +
-          "Your TelePets adventure continues! Use /mypet to check on your companion or /help for available commands."
+          "Your TelePets adventure continues! Check on your pet companion or use the available commands."
         );
       }
     });
 
-    // Pet selection commands
-    composer.command("choosepet", async (ctx) => {
-      if (!ctx.user?.is_registered) {
-        await ctx.reply("Please complete registration first by typing /start");
-        return;
-      }
-
-      // Check if user already has a pet
-      const existingPet = await db
-        .selectFrom("pets")
-        .selectAll()
-        .where("user_id", "=", ctx.user.id)
-        .executeTakeFirst();
-
-      if (existingPet) {
-        await ctx.reply("You already have a pet! Use /mypet to see your companion.");
-        return;
-      }
-
-      await showStarterPets(ctx);
-    });
-
-    // Handle pet selection callbacks
-    composer.callbackQuery(/^select_pet:/, handlePetSelection);
-
-    // Handle pet naming (simple text handler for now)
-    composer.on("message:text", async (ctx) => {
-      if (ctx.pendingPetTypeId) {
-        await handlePetNaming(ctx);
-      }
-    });
-
     // Show pet status
-    composer.command("mypet", async (ctx) => {
+    privateChatComposer.command("mypet", async (ctx) => {
       if (!ctx.user?.is_registered) {
         await ctx.reply("Please complete registration first by typing /start");
         return;
@@ -103,7 +86,7 @@ async function main(): Promise<void> {
         .executeTakeFirst();
 
       if (!pet) {
-        await ctx.reply("You don't have a pet yet! Use /choosepet to get your first companion.");
+        await ctx.reply("You don't have a pet yet! Complete your registration to get your first companion.");
         return;
       }
 
@@ -123,11 +106,10 @@ async function main(): Promise<void> {
     });
 
     // Help command
-    composer.command("help", async (ctx) => {
+    privateChatComposer.command("help", async (ctx) => {
       await ctx.reply(
         "🎮 **TelePets Commands:**\n\n" +
         "/start - Begin your adventure\n" +
-        "/choosepet - Select your starter pet\n" +
         "/mypet - Check your pet's status\n" +
         "/help - Show this help message\n\n" +
         "More features coming soon! 🚀",

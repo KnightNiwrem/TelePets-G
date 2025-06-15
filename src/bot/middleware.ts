@@ -14,7 +14,7 @@ export async function userRegistrationMiddleware(
   }
 
   const db = getDatabase();
-  const telegramId = ctx.from.id.toString();
+  const telegramId = ctx.from.id;
 
   try {
     // Check if user exists in database

@@ -10,7 +10,7 @@ export interface Database {
 
 export interface UserTable {
   id: Generated<number>;
-  telegram_id: string;
+  telegram_id: number;
   username: string | null;
   first_name: string;
   last_name: string | null;

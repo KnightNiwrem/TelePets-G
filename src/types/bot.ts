@@ -7,7 +7,7 @@ import { type ConversationFlavor } from "@grammyjs/conversations";
 export interface CustomBotContext {
   user?: {
     id: number;
-    telegram_id: string;
+    telegram_id: number;
     username: string | null;
     first_name: string;
     last_name: string | null;
