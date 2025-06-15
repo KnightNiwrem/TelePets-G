@@ -6,7 +6,7 @@ import type { BotContext } from "../types/bot.js";
 /**
  * Get emoji for pet type
  */
-function getPetEmoji(petType: string): string {
+export function getPetEmoji(petType: string): string {
   switch (petType.toLowerCase()) {
   case "cat":
     return "🐱";
