@@ -1,5 +1,5 @@
 import { type Conversation } from "@grammyjs/conversations";
-import { InlineKeyboard } from "grammy";
+import { InlineKeyboard, type Context } from "grammy";
 import { getDatabase } from "../database/connection.js";
 import type { BotContext } from "../types/bot.js";
 
@@ -7,8 +7,8 @@ import type { BotContext } from "../types/bot.js";
  * Registration conversation flow
  */
 export async function registrationConversation(
-  conversation: Conversation<BotContext, BotContext>,
-  ctx: BotContext
+  conversation: Conversation<BotContext>,
+  ctx: Context
 ): Promise<void> {
   const db = getDatabase();
 
@@ -35,14 +35,17 @@ export async function registrationConversation(
   }
 
   // User chose yes, complete registration
-  if (!ctx.user) {
-    throw new Error("User not found in context");
-  }
+  const externalResult = await conversation.external(() => {
+    if (!ctx.from) {
+      throw new Error("User not found in context");
+    }
+    return { userId: ctx.from.id };
+  });
 
   await db
     .updateTable("users")
     .set({ is_registered: true, updated_at: new Date() })
-    .where("id", "=", ctx.user.id)
+    .where("telegram_id", "=", externalResult.userId.toString())
     .execute();
 
   await response.answerCallbackQuery();

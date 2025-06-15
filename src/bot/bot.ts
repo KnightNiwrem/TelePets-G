@@ -15,14 +15,7 @@ export function createBotComposer(): Composer<BotContext> {
   // Register the registration conversation
   composer.use(createConversation(registrationConversation, "registration"));
 
-  // Use type assertion to work around type compatibility issues
-  const protectedComposer = composer.errorBoundary((error) => {
-    console.error("Bot error occurred:", error);
-  }) as Composer<BotContext>;
-
-  const privateComposer = protectedComposer.chatType("private") as Composer<BotContext>;
-
-  return privateComposer;
+  return composer;
 }
 
 /**
