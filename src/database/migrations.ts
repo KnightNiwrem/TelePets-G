@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     telegram_id BIGINT UNIQUE NOT NULL,
     username VARCHAR(255),
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
     is_registered BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

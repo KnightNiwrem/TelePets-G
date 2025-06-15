@@ -31,8 +31,7 @@ export async function userRegistrationMiddleware(
         .values({
           telegram_id: telegramId,
           username: ctx.from.username || null,
-          first_name: ctx.from.first_name,
-          last_name: ctx.from.last_name || null,
+          name: ctx.from.first_name,
           is_registered: false,
         })
         .returningAll()
@@ -41,6 +40,12 @@ export async function userRegistrationMiddleware(
 
     // Store user info in context for easy access
     ctx.user = user;
+
+    // If user is not registered, automatically start registration conversation
+    if (user && !user.is_registered) {
+      await ctx.conversation.enter("registration");
+      return;
+    }
 
     await next();
   } catch (error) {

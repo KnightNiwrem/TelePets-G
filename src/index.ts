@@ -28,43 +28,22 @@ async function main(): Promise<void> {
     }
     const bot = new Bot<BotContext>(token);
 
-    // Apply error boundary and private chat filtering to the bot
-    bot.errorBoundary((error) => {
+    // Create a composer with error boundary and private chat filtering
+    const composer = bot.errorBoundary((error) => {
       console.error("Bot error occurred:", error);
-    });
-
-    // Create private chat composer  
-    const privateChatComposer = bot.chatType("private");
+    }).chatType("private");
 
     // Install conversations plugin
-    privateChatComposer.use(conversations());
+    composer.use(conversations());
 
     // Register the registration conversation
-    privateChatComposer.use(createConversation(registrationConversation, "registration"));
+    composer.use(createConversation(registrationConversation, "registration"));
 
     // Add user registration middleware
-    privateChatComposer.use(userRegistrationMiddleware);
-
-    // Bot commands
-    privateChatComposer.command("start", async (ctx) => {
-      if (!ctx.user) {
-        await ctx.reply("An error occurred. Please try again.");
-        return;
-      }
-
-      if (!ctx.user.is_registered) {
-        // Start the registration conversation
-        await ctx.conversation.enter("registration");
-      } else {
-        await ctx.reply(
-          `👋 Welcome back, ${ctx.user.first_name}!\n\n` +
-          "Your TelePets adventure continues! Check on your pet companion or use the available commands."
-        );
-      }
-    });
+    composer.use(userRegistrationMiddleware);
 
     // Show pet status
-    privateChatComposer.command("mypet", async (ctx) => {
+    composer.command("mypet", async (ctx) => {
       if (!ctx.user?.is_registered) {
         await ctx.reply("Please complete registration first by typing /start");
         return;
@@ -106,10 +85,9 @@ async function main(): Promise<void> {
     });
 
     // Help command
-    privateChatComposer.command("help", async (ctx) => {
+    composer.command("help", async (ctx) => {
       await ctx.reply(
         "🎮 **TelePets Commands:**\n\n" +
-        "/start - Begin your adventure\n" +
         "/mypet - Check your pet's status\n" +
         "/help - Show this help message\n\n" +
         "More features coming soon! 🚀",

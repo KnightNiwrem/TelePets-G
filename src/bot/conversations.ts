@@ -115,13 +115,11 @@ export async function registrationConversation(
   // Wait for pet name
   let petName: string;
   while (true) {
-    const nameResponse = await conversation.wait();
+    const nameResponse = await conversation.waitFor("message:text").and((ctx) => {
+      const text = ctx.message.text.trim();
+      return text.length >= 1 && text.length <= 20;
+    });
     
-    if (!nameResponse.message?.text) {
-      await ctx.reply("Please provide a text name for your pet:");
-      continue;
-    }
-
     petName = nameResponse.message.text.trim();
     
     if (petName.length < 1 || petName.length > 20) {

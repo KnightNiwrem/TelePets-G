@@ -12,8 +12,7 @@ export interface UserTable {
   id: Generated<number>;
   telegram_id: number;
   username: string | null;
-  first_name: string;
-  last_name: string | null;
+  name: string;
   is_registered: Generated<boolean>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
