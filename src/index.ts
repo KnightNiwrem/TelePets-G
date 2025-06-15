@@ -35,50 +35,14 @@ async function main(): Promise<void> {
       }
 
       if (!ctx.user.is_registered) {
-        // Send welcome message with inline keyboard
-        const keyboard = {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "✅ Yes, let's start!", callback_data: "register_yes" }],
-              [{ text: "❌ Maybe later", callback_data: "register_no" }]
-            ]
-          }
-        };
-
-        await ctx.reply(
-          "🎮 Welcome to TelePets! \n\n" +
-          "To start your pet-raising adventure, you need to complete registration. " +
-          "Are you ready to begin? Choose an option below:",
-          keyboard
-        );
+        // Start the registration conversation
+        await ctx.conversation.enter("registration");
       } else {
         await ctx.reply(
           `👋 Welcome back, ${ctx.user.first_name}!\n\n` +
           "Your TelePets adventure continues! Use /mypet to check on your companion or /help for available commands."
         );
       }
-    });
-
-    // Handle registration responses
-    composer.callbackQuery("register_yes", async (ctx) => {
-      if (!ctx.user) return;
-      
-      await db
-        .updateTable("users")
-        .set({ is_registered: true, updated_at: new Date() })
-        .where("id", "=", ctx.user.id)
-        .execute();
-
-      await ctx.answerCallbackQuery();
-      await ctx.editMessageText(
-        "✅ Registration complete! \n\n" +
-        "Now let's choose your starter pet. Use /choosepet to see your options!"
-      );
-    });
-
-    composer.callbackQuery("register_no", async (ctx) => {
-      await ctx.answerCallbackQuery();
-      await ctx.editMessageText("No worries! Type /start when you're ready to begin your TelePets adventure.");
     });
 
     // Pet selection commands

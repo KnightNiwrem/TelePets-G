@@ -7,7 +7,7 @@ import type { BotContext } from "../types/bot.js";
  * Registration conversation flow
  */
 export async function registrationConversation(
-  conversation: Conversation<BotContext>,
+  conversation: Conversation<BotContext, BotContext>,
   ctx: BotContext
 ): Promise<void> {
   const db = getDatabase();

@@ -1,6 +1,7 @@
 import { Bot, Composer } from "grammy";
-import { conversations } from "@grammyjs/conversations";
+import { conversations, createConversation } from "@grammyjs/conversations";
 import { type BotContext } from "../types/bot.js";
+import { registrationConversation } from "./conversations.js";
 
 /**
  * Create and configure the bot composer with proper middleware
@@ -10,6 +11,9 @@ export function createBotComposer(): Composer<BotContext> {
 
   // Install conversations plugin first (without sessions)
   composer.use(conversations());
+
+  // Register the registration conversation
+  composer.use(createConversation(registrationConversation, "registration"));
 
   // Use type assertion to work around type compatibility issues
   const protectedComposer = composer.errorBoundary((error) => {
