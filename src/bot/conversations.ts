@@ -10,8 +10,6 @@ export async function registrationConversation(
   conversation: Conversation<BotContext>,
   ctx: Context
 ): Promise<void> {
-  const db = getDatabase();
-
   // Send welcome message with inline keyboard
   const keyboard = new InlineKeyboard()
     .text("✅ Yes, let's start!", "register_yes")
@@ -35,18 +33,21 @@ export async function registrationConversation(
   }
 
   // User chose yes, complete registration
-  const externalResult = await conversation.external(() => {
-    if (!ctx.from) {
+  await conversation.external(async () => {
+    const userId = ctx.from?.id;
+    if (!userId) {
       throw new Error("User not found in context");
     }
-    return { userId: ctx.from.id };
+    const db = getDatabase();
+    
+    await db
+      .updateTable("users")
+      .set({ is_registered: true, updated_at: new Date() })
+      .where("telegram_id", "=", userId.toString())
+      .execute();
+      
+    return { userId };
   });
-
-  await db
-    .updateTable("users")
-    .set({ is_registered: true, updated_at: new Date() })
-    .where("telegram_id", "=", externalResult.userId.toString())
-    .execute();
 
   await response.answerCallbackQuery();
   await response.editMessageText(

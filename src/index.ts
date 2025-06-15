@@ -27,13 +27,6 @@ async function main(): Promise<void> {
     // Add user registration middleware to composer
     composer.use(userRegistrationMiddleware);
 
-    // Apply error boundary and private chat filtering to the bot
-    bot.errorBoundary((error) => {
-      console.error("Bot error occurred:", error);
-    });
-    
-    bot.chatType("private");
-
     // Use the composer in the bot
     bot.use(composer);
 
