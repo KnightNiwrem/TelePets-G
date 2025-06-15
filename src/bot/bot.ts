@@ -7,19 +7,25 @@ import { registrationConversation } from "./conversations.js";
  * Create and configure the bot composer with proper middleware
  */
 export function createBotComposer() {
-  const composer = new Composer<BotContext>();
+  // Create the main composer with error boundary applied first
+  const baseComposer = new Composer<BotContext>().errorBoundary((error) => {
+    console.error("Bot error occurred:", error);
+  });
 
-  // Install conversations plugin first (without sessions)
-  composer.use(conversations());
+  // Create a private chat filtered composer
+  const privateChatComposer = baseComposer.chatType("private");
+
+  // Install conversations plugin
+  privateChatComposer.use(conversations());
 
   // Register the registration conversation
-  composer.use(createConversation(registrationConversation, "registration"));
+  privateChatComposer.use(createConversation(registrationConversation, "registration"));
 
-  return composer;
+  return baseComposer;
 }
 
 /**
- * Create the main bot instance with error boundary and private chat filtering
+ * Create the main bot instance
  */
 export function createBot(): Bot<BotContext> {
   const token = process.env.BOT_TOKEN;
@@ -27,14 +33,5 @@ export function createBot(): Bot<BotContext> {
     throw new Error("BOT_TOKEN environment variable is required");
   }
 
-  const bot = new Bot<BotContext>(token);
-  
-  // Apply error boundary and private chat filtering to the bot
-  bot.errorBoundary((error) => {
-    console.error("Bot error occurred:", error);
-  });
-  
-  bot.chatType("private");
-
-  return bot;
+  return new Bot<BotContext>(token);
 }
