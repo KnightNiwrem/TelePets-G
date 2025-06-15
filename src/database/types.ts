@@ -3,15 +3,15 @@
  */
 
 export interface Database {
-  users: UserTable;
+  players: PlayerTable;
   pets: PetTable;
   pet_types: PetTypeTable;
 }
 
-export interface UserTable {
+export interface PlayerTable {
   id: Generated<number>;
   telegram_id: number;
-  username: string | null;
+  chat_id: number;
   name: string;
   is_registered: Generated<boolean>;
   created_at: Generated<Date>;
@@ -20,7 +20,7 @@ export interface UserTable {
 
 export interface PetTable {
   id: Generated<number>;
-  user_id: number;
+  player_id: number;
   pet_type_id: number;
   name: string;
   level: Generated<number>;
@@ -36,7 +36,6 @@ export interface PetTypeTable {
   id: Generated<number>;
   name: string;
   description: string;
-  base_stats: Record<string, number>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }

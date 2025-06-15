@@ -56,7 +56,7 @@ async function main(): Promise<void> {
           "pets.energy",
           "pet_types.name as type_name"
         ])
-        .where("pets.user_id", "=", ctx.user!.id)
+        .where("pets.player_id", "=", ctx.player!.id)
         .executeTakeFirstOrThrow();
 
       const emoji = pet.type_name === "cat" ? "🐱" : 

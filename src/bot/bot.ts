@@ -1,1 +1,0 @@
-// This file is intentionally empty as all bot logic has been moved to index.ts

@@ -5,16 +5,15 @@ import { type ConversationFlavor } from "@grammyjs/conversations";
  * Custom properties for our bot context
  */
 export interface CustomBotContext {
-  user?: {
+  player?: {
     id: number;
     telegram_id: number;
-    username: string | null;
+    chat_id: number;
     name: string;
     is_registered: boolean;
     created_at: Date;
     updated_at: Date;
   };
-  pendingPetTypeId?: number;
 }
 
 /**

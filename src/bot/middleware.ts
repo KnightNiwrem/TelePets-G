@@ -3,34 +3,35 @@ import { getDatabase } from "../database/connection.js";
 import type { BotContext } from "../types/bot.js";
 
 /**
- * Middleware to check if user is registered and create user record if not exists
+ * Middleware to check if player is registered and create player record if not exists
  */
 export async function userRegistrationMiddleware(
   ctx: BotContext,
   next: NextFunction
 ): Promise<void> {
-  if (!ctx.from) {
+  if (!ctx.from || !ctx.chat) {
     return;
   }
 
   const db = getDatabase();
   const telegramId = ctx.from.id;
+  const chatId = ctx.chat.id;
 
   try {
-    // Check if user exists in database
-    let user = await db
-      .selectFrom("users")
+    // Check if player exists in database
+    let player = await db
+      .selectFrom("players")
       .selectAll()
       .where("telegram_id", "=", telegramId)
       .executeTakeFirst();
 
-    // Create user record if doesn't exist
-    if (!user) {
-      user = await db
-        .insertInto("users")
+    // Create player record if doesn't exist
+    if (!player) {
+      player = await db
+        .insertInto("players")
         .values({
           telegram_id: telegramId,
-          username: ctx.from.username || null,
+          chat_id: chatId,
           name: ctx.from.first_name,
           is_registered: false,
         })
@@ -38,11 +39,11 @@ export async function userRegistrationMiddleware(
         .executeTakeFirst();
     }
 
-    // Store user info in context for easy access
-    ctx.user = user;
+    // Store player info in context for easy access
+    ctx.player = player;
 
-    // If user is not registered, automatically start registration conversation
-    if (user && !user.is_registered) {
+    // If player is not registered, automatically start registration conversation
+    if (player && !player.is_registered) {
       await ctx.conversation.enter("registration");
       return;
     }

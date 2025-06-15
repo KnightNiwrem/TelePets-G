@@ -25,7 +25,7 @@ function getPetEmoji(petType: string): string {
 export async function registrationConversation(
   conversation: Conversation<BotContext>,
   ctx: Context
-): Promise<void> {
+) {
   // Send welcome message and directly proceed with registration
   await ctx.reply(
     "🎮 Welcome to TelePets! \n\n" +
@@ -44,7 +44,7 @@ export async function registrationConversation(
     const db = getDatabase();
     
     await db
-      .updateTable("users")
+      .updateTable("players")
       .set({ is_registered: true, updated_at: new Date() })
       .where("telegram_id", "=", userId)
       .execute();
@@ -79,10 +79,7 @@ export async function registrationConversation(
     "🐾 Choose your starter pet! \n\n" +
     "Each pet has unique characteristics:\n\n" +
     petTypes.map(pet => 
-      `${getPetEmoji(pet.name)} **${pet.name}**: ${pet.description}\n` +
-      `Stats: ${Object.entries(pet.base_stats as Record<string, number>)
-        .map(([stat, value]) => `${stat}: ${value}`)
-        .join(", ")}`
+      `${getPetEmoji(pet.name)} **${pet.name}**: ${pet.description}`
     ).join("\n\n"),
     { 
       reply_markup: keyboard,
@@ -126,21 +123,21 @@ export async function registrationConversation(
   await conversation.external(async () => {
     const db = getDatabase();
     
-    // Get the user record first to get the internal user_id
-    const user = await db
-      .selectFrom("users")
+    // Get the player record first to get the internal player_id
+    const player = await db
+      .selectFrom("players")
       .select("id")
       .where("telegram_id", "=", userId)
       .executeTakeFirst();
 
-    if (!user) {
-      throw new Error("User not found");
+    if (!player) {
+      throw new Error("Player not found");
     }
 
     await db
       .insertInto("pets")
       .values({
-        user_id: user.id,
+        player_id: player.id,
         pet_type_id: petTypeId,
         name: petName,
       })

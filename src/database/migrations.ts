@@ -6,11 +6,11 @@ import type { Database } from "./types.js";
  */
 
 export const INITIAL_MIGRATION = `
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
+-- Create players table
+CREATE TABLE IF NOT EXISTS players (
     id SERIAL PRIMARY KEY,
     telegram_id BIGINT UNIQUE NOT NULL,
-    username VARCHAR(255),
+    chat_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     is_registered BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS pet_types (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    base_stats JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -30,7 +29,7 @@ CREATE TABLE IF NOT EXISTS pet_types (
 -- Create pets table
 CREATE TABLE IF NOT EXISTS pets (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    player_id INTEGER REFERENCES players(id) ON DELETE CASCADE,
     pet_type_id INTEGER REFERENCES pet_types(id) ON DELETE RESTRICT,
     name VARCHAR(255) NOT NULL,
     level INTEGER DEFAULT 1,
@@ -43,15 +42,15 @@ CREATE TABLE IF NOT EXISTS pets (
 );
 
 -- Insert initial pet types
-INSERT INTO pet_types (name, description, base_stats) VALUES
-    ('Cat', 'A playful and agile companion', '{"agility": 8, "strength": 5, "intelligence": 7}'),
-    ('Dog', 'A loyal and energetic friend', '{"agility": 6, "strength": 7, "intelligence": 6}'),
-    ('Bird', 'A colorful and intelligent pet', '{"agility": 9, "strength": 3, "intelligence": 9}')
+INSERT INTO pet_types (name, description) VALUES
+    ('Cat', 'A playful and agile companion'),
+    ('Dog', 'A loyal and energetic friend'),
+    ('Bird', 'A colorful and intelligent pet')
 ON CONFLICT DO NOTHING;
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
-CREATE INDEX IF NOT EXISTS idx_pets_user_id ON pets(user_id);
+CREATE INDEX IF NOT EXISTS idx_players_telegram_id ON players(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_pets_player_id ON pets(player_id);
 CREATE INDEX IF NOT EXISTS idx_pets_pet_type_id ON pets(pet_type_id);
 `;
 
