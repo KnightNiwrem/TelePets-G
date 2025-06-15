@@ -44,11 +44,6 @@ async function main(): Promise<void> {
 
     // Show pet status
     composer.command("mypet", async (ctx) => {
-      if (!ctx.user?.is_registered) {
-        await ctx.reply("Please complete registration first by typing /start");
-        return;
-      }
-
       const pet = await db
         .selectFrom("pets")
         .innerJoin("pet_types", "pets.pet_type_id", "pet_types.id")
@@ -61,13 +56,8 @@ async function main(): Promise<void> {
           "pets.energy",
           "pet_types.name as type_name"
         ])
-        .where("pets.user_id", "=", ctx.user.id)
-        .executeTakeFirst();
-
-      if (!pet) {
-        await ctx.reply("You don't have a pet yet! Complete your registration to get your first companion.");
-        return;
-      }
+        .where("pets.user_id", "=", ctx.user!.id)
+        .executeTakeFirstOrThrow();
 
       const emoji = pet.type_name === "cat" ? "🐱" : 
         pet.type_name === "dog" ? "🐶" : 

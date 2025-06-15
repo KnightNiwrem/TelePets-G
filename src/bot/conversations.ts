@@ -113,22 +113,14 @@ export async function registrationConversation(
   );
 
   // Wait for pet name
-  let petName: string;
-  while (true) {
-    const nameResponse = await conversation.waitFor("message:text").and((ctx) => {
-      const text = ctx.message.text.trim();
-      return text.length >= 1 && text.length <= 20;
-    });
-    
-    petName = nameResponse.message.text.trim();
-    
-    if (petName.length < 1 || petName.length > 20) {
-      await ctx.reply("Pet name must be between 1 and 20 characters. Please try again:");
-      continue;
-    }
-
-    break;
-  }
+  const nameResponse = await conversation.waitFor("message:text").and((ctx) => {
+    const text = ctx.message.text.trim();
+    return text.length >= 1 && text.length <= 20;
+  }, {
+    otherwise: (ctx) => ctx.reply("Pet name must be between 1 and 20 characters. Please try again:")
+  });
+  
+  const petName = nameResponse.message.text.trim();
 
   // Create the pet
   await conversation.external(async () => {

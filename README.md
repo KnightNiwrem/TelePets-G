@@ -67,10 +67,10 @@ docker-compose up -d
 
 The bot supports the following commands:
 
-- `/start` - Begin your TelePets adventure
-- `/choosepet` - Select your starter pet
 - `/mypet` - Check your pet's status
 - `/help` - Show available commands
+
+Registration and pet selection are handled automatically through conversation flows.
 
 ### Code Quality
 
