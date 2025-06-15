@@ -1,6 +1,7 @@
 import { type Conversation } from "@grammyjs/conversations";
+import { InlineKeyboard } from "grammy";
 import { getDatabase } from "../database/connection.js";
-import type { BotContext } from "./bot.js";
+import type { BotContext } from "../types/bot.js";
 
 /**
  * Registration conversation flow
@@ -11,36 +12,29 @@ export async function registrationConversation(
 ): Promise<void> {
   const db = getDatabase();
 
+  // Send welcome message with inline keyboard
+  const keyboard = new InlineKeyboard()
+    .text("✅ Yes, let's start!", "register_yes")
+    .row()
+    .text("❌ Maybe later", "register_no");
+
   await ctx.reply(
     "🎮 Welcome to TelePets! \n\n" +
     "To start your pet-raising adventure, you need to complete registration. " +
-    "Are you ready to begin? (yes/no)"
+    "Are you ready to begin? Choose an option below:",
+    { reply_markup: keyboard }
   );
 
-  // Wait for user response
-  const response = await conversation.wait();
-  const text = response.message?.text?.toLowerCase();
+  // Wait for callback query response
+  const response = await conversation.waitForCallbackQuery(/^register_(yes|no)$/);
 
-  if (text !== "yes" && text !== "y") {
-    await ctx.reply("No worries! Type /start when you're ready to begin your TelePets adventure.");
+  if (response.match[1] === "no") {
+    await response.answerCallbackQuery();
+    await response.editMessageText("No worries! Type /start when you're ready to begin your TelePets adventure.");
     return;
   }
 
-  await ctx.reply(
-    "🐾 Great! Let's get you registered.\n\n" +
-    "You'll get to choose your starter pet in just a moment. " +
-    "Are you excited to meet your new companion? (yes/no)"
-  );
-
-  const confirmResponse = await conversation.wait();
-  const confirmText = confirmResponse.message?.text?.toLowerCase();
-
-  if (confirmText !== "yes" && confirmText !== "y") {
-    await ctx.reply("That's okay! Type /start whenever you want to try again.");
-    return;
-  }
-
-  // Mark user as registered
+  // User chose yes, complete registration
   if (!ctx.user) {
     throw new Error("User not found in context");
   }
@@ -51,8 +45,9 @@ export async function registrationConversation(
     .where("id", "=", ctx.user.id)
     .execute();
 
-  await ctx.reply(
+  await response.answerCallbackQuery();
+  await response.editMessageText(
     "✅ Registration complete! \n\n" +
-    "Now let's choose your starter pet. Type /choosepet to see your options!"
+    "Now let's choose your starter pet. Use /choosepet to see your options!"
   );
 }

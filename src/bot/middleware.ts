@@ -1,6 +1,6 @@
 import type { NextFunction } from "grammy";
 import { getDatabase } from "../database/connection.js";
-import type { BotContext } from "./bot.js";
+import type { BotContext } from "../types/bot.js";
 
 /**
  * Middleware to check if user is registered and create user record if not exists

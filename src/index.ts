@@ -3,7 +3,7 @@
  */
 import { initializeDatabase } from "./database/connection.js";
 import { runMigrations } from "./database/migrations.js";
-import { createBot } from "./bot/bot.js";
+import { createBot, createBotComposer } from "./bot/bot.js";
 import { userRegistrationMiddleware } from "./bot/middleware.js";
 import { showStarterPets, handlePetSelection, handlePetNaming } from "./bot/pets.js";
 
@@ -19,28 +19,23 @@ async function main(): Promise<void> {
     console.log("🔄 Running database migrations...");
     await runMigrations(db);
 
-    // Create bot
+    // Create bot and composer
     console.log("🤖 Creating bot instance...");
     const bot = createBot();
+    const composer = createBotComposer();
 
-    // Add user registration middleware
-    bot.use(userRegistrationMiddleware);
+    // Add user registration middleware to composer
+    composer.use(userRegistrationMiddleware);
 
     // Bot commands
-    bot.command("start", async (ctx) => {
+    composer.command("start", async (ctx) => {
       if (!ctx.user) {
         await ctx.reply("An error occurred. Please try again.");
         return;
       }
 
       if (!ctx.user.is_registered) {
-        await ctx.reply(
-          "🎮 Welcome to TelePets! \n\n" +
-          "To start your pet-raising adventure, you need to complete registration. " +
-          "Are you ready to begin? Choose an option below:"
-        );
-        
-        // Simple registration flow
+        // Send welcome message with inline keyboard
         const keyboard = {
           reply_markup: {
             inline_keyboard: [
@@ -49,8 +44,13 @@ async function main(): Promise<void> {
             ]
           }
         };
-        
-        await ctx.reply("Choose an option:", keyboard);
+
+        await ctx.reply(
+          "🎮 Welcome to TelePets! \n\n" +
+          "To start your pet-raising adventure, you need to complete registration. " +
+          "Are you ready to begin? Choose an option below:",
+          keyboard
+        );
       } else {
         await ctx.reply(
           `👋 Welcome back, ${ctx.user.first_name}!\n\n` +
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
     });
 
     // Handle registration responses
-    bot.callbackQuery("register_yes", async (ctx) => {
+    composer.callbackQuery("register_yes", async (ctx) => {
       if (!ctx.user) return;
       
       await db
@@ -76,13 +76,13 @@ async function main(): Promise<void> {
       );
     });
 
-    bot.callbackQuery("register_no", async (ctx) => {
+    composer.callbackQuery("register_no", async (ctx) => {
       await ctx.answerCallbackQuery();
       await ctx.editMessageText("No worries! Type /start when you're ready to begin your TelePets adventure.");
     });
 
     // Pet selection commands
-    bot.command("choosepet", async (ctx) => {
+    composer.command("choosepet", async (ctx) => {
       if (!ctx.user?.is_registered) {
         await ctx.reply("Please complete registration first by typing /start");
         return;
@@ -104,17 +104,17 @@ async function main(): Promise<void> {
     });
 
     // Handle pet selection callbacks
-    bot.callbackQuery(/^select_pet:/, handlePetSelection);
+    composer.callbackQuery(/^select_pet:/, handlePetSelection);
 
     // Handle pet naming (simple text handler for now)
-    bot.on("message:text", async (ctx) => {
+    composer.on("message:text", async (ctx) => {
       if (ctx.pendingPetTypeId) {
         await handlePetNaming(ctx);
       }
     });
 
     // Show pet status
-    bot.command("mypet", async (ctx) => {
+    composer.command("mypet", async (ctx) => {
       if (!ctx.user?.is_registered) {
         await ctx.reply("Please complete registration first by typing /start");
         return;
@@ -156,7 +156,7 @@ async function main(): Promise<void> {
     });
 
     // Help command
-    bot.command("help", async (ctx) => {
+    composer.command("help", async (ctx) => {
       await ctx.reply(
         "🎮 **TelePets Commands:**\n\n" +
         "/start - Begin your adventure\n" +
@@ -167,6 +167,9 @@ async function main(): Promise<void> {
         { parse_mode: "Markdown" }
       );
     });
+
+    // Use the composer in the bot
+    bot.use(composer);
 
     // Start the bot
     console.log("🎮 Starting TelePets bot...");

@@ -1,6 +1,6 @@
 import { InlineKeyboard } from "grammy";
 import { getDatabase } from "../database/connection.js";
-import type { BotContext } from "./bot.js";
+import type { BotContext } from "../types/bot.js";
 
 /**
  * Show available starter pets
