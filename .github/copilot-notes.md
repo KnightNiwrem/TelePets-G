@@ -38,6 +38,12 @@ This file captures learnings and insights to guide future Copilot runs on this p
 - Leverage Bun's TypeScript support without additional transpilation
 - Watch mode available for development with `bun dev`
 
+### Grammy Bot Framework
+- **IMPORTANT**: `.errorBoundary()` and `.chatType()` return NEW composers with protection/filtering applied
+- Never apply `.errorBoundary()` or `.chatType()` directly to the bot instance - it won't work
+- Always apply these methods to composers and return the result
+- Sessions must NEVER be used in this project - Grammy conversations work without sessions
+
 ### Docker & Deployment
 - Use `oven/bun:1.2.14-slim` as base image
 - Install production dependencies only in final image
